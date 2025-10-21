@@ -45,10 +45,17 @@ else:
 
 counter = 0
 crossed_ids = set()
+
+FRAME_SKIP = 10  # Procesa solo 1 de cada 3 frames (reduce carga ≈ 3x)
+frame_count = 0
 while cap.isOpened():
     ret, frame = cap.read()
     if not ret:
         break
+
+    frame_count += 1
+    if frame_count % FRAME_SKIP != 0:
+        continue  # Saltar este frame
 
     # Run YOLO Tracking on the Video Frame
     results = model.track(frame, persist=True, classes=[1,2,3,5,6,7], verbose=False)
