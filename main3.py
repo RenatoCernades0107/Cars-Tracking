@@ -149,7 +149,8 @@ class SortManager:
         # 6) salida confirmada
         out = []
         for t in self.trks:
-            if t.hits >= self.min_hits or t.age <= self.min_hits:
+            # O al menos dos veces actualizado
+            if t.hits >= self.min_hits:
                 out.append({"id": t.id, "bbox": t.get_bbox(), "cls": t.cls_id, "tracker": t})
         return out
 
