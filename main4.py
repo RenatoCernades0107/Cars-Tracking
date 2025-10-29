@@ -150,7 +150,7 @@ class SortManager:
 
 # ======= Main =======
 def main():
-    video_path = "videos/videosample1.mp4"
+    video_path = "videos/videosample3.mp4"
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         print("No se pudo abrir el video"); return

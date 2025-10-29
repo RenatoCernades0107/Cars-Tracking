@@ -4,6 +4,7 @@ from ultralytics import YOLO
 from scipy.optimize import linear_sum_assignment
 from filterpy.kalman import KalmanFilter
 from setline import set_line_from_video
+import time
 
 # ======= Utilidades geométricas =======
 def iou(bb1, bb2):
@@ -156,7 +157,9 @@ class SortManager:
 
 # ======= Main =======
 def main():
-    video_path = "videos/videosample2.mp4"
+    start_time = time.time()
+
+    video_path = "videos/videosample3.mp4"
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         print("No se pudo abrir el video"); return
@@ -247,6 +250,14 @@ def main():
 
     cap.release()
     cv2.destroyAllWindows()
+
+    end_time = time.time()
+    elapsed = end_time - start_time
+
+    print("\n==============================")
+    print(f"Conteo final de vehículos: {total_count}")
+    print(f"Tiempo total de ejecución: {elapsed:.2f} segundos")
+    print("==============================\n")
 
 if __name__ == "__main__":
     main()
