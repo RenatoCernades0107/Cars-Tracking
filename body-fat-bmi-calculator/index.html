@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de IMC y % de Grasa Corporal</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --card-border: #334155;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --accent-2: #34d399;
+    --danger: #f87171;
+    --warn: #fbbf24;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: linear-gradient(180deg, #0f172a, #111827);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 1.6rem;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 28px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card h2 {
+    font-size: 1.05rem;
+    margin: 0 0 16px;
+    color: var(--accent);
+  }
+  .sex-toggle {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .sex-toggle label {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--card-border);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: 0.15s;
+    user-select: none;
+  }
+  .sex-toggle input { display: none; }
+  .sex-toggle input:checked + span {
+    display: block;
+  }
+  .sex-toggle label:has(input:checked) {
+    background: var(--accent);
+    color: #0f172a;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.full { grid-column: 1 / -1; }
+  label.field-label {
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  input[type="number"] {
+    background: #0f172a;
+    border: 1px solid var(--card-border);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+  input[type="number"]:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .hidden { display: none !important; }
+  button {
+    width: 100%;
+    padding: 14px;
+    margin-top: 20px;
+    background: var(--accent);
+    color: #0f172a;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  button:hover { filter: brightness(1.08); }
+  .error {
+    color: var(--danger);
+    font-size: 0.85rem;
+    margin-top: 10px;
+    min-height: 1.2em;
+  }
+  .results { display: none; }
+  .results.show { display: block; }
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--card-border);
+  }
+  .result-row:last-child { border-bottom: none; }
+  .result-label { color: var(--muted); font-size: 0.9rem; }
+  .result-value { font-size: 1.4rem; font-weight: 700; }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .badge.low { background: rgba(56,189,248,0.15); color: var(--accent); }
+  .badge.ok { background: rgba(52,211,153,0.15); color: var(--accent-2); }
+  .badge.warn { background: rgba(251,191,36,0.15); color: var(--warn); }
+  .badge.high { background: rgba(248,113,113,0.15); color: var(--danger); }
+  details {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 6px;
+  }
+  details summary { cursor: pointer; color: var(--accent); }
+  details p { line-height: 1.5; }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.78rem;
+    margin-top: 30px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Calculadora de IMC y % Grasa Corporal</h1>
+  <p class="subtitle">Método de perímetros de la Marina de EE. UU. (US Navy) + IMC estándar</p>
+
+  <div class="card">
+    <h2>Tus datos</h2>
+
+    <div class="sex-toggle">
+      <label>
+        <input type="radio" name="sex" value="male" checked>
+        <span>Hombre</span>
+      </label>
+      <label>
+        <input type="radio" name="sex" value="female">
+        <span>Mujer</span>
+      </label>
+    </div>
+
+    <div class="grid">
+      <div class="field">
+        <label class="field-label" for="age">Edad (años)</label>
+        <input type="number" id="age" min="15" max="100" step="1" placeholder="30">
+      </div>
+      <div class="field">
+        <label class="field-label" for="height">Altura (cm)</label>
+        <input type="number" id="height" min="120" max="230" step="0.1" placeholder="175">
+      </div>
+      <div class="field">
+        <label class="field-label" for="weight">Peso (kg)</label>
+        <input type="number" id="weight" min="30" max="300" step="0.1" placeholder="75">
+      </div>
+      <div class="field">
+        <label class="field-label" for="neck">Cuello (cm)</label>
+        <input type="number" id="neck" min="20" max="70" step="0.1" placeholder="38">
+      </div>
+      <div class="field">
+        <label class="field-label" for="waist">Cintura (cm)</label>
+        <input type="number" id="waist" min="40" max="200" step="0.1" placeholder="85">
+      </div>
+      <div class="field" id="hipField">
+        <label class="field-label" for="hip">Cadera (cm) <span style="opacity:.7">— solo mujeres</span></label>
+        <input type="number" id="hip" min="50" max="200" step="0.1" placeholder="95">
+      </div>
+    </div>
+
+    <div class="error" id="errorMsg"></div>
+    <button id="calcBtn">Calcular</button>
+  </div>
+
+  <div class="card results" id="resultsCard">
+    <h2>Resultados</h2>
+    <div class="result-row">
+      <span class="result-label">IMC (Índice de Masa Corporal)</span>
+      <span class="result-value" id="bmiValue">-- <span id="bmiBadge"></span></span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">% Grasa corporal estimado</span>
+      <span class="result-value" id="bfValue">-- <span id="bfBadge"></span></span>
+    </div>
+    <div class="result-row">
+      <span class="result-label">Masa grasa / masa magra</span>
+      <span class="result-value" id="massValue" style="font-size:1rem; font-weight:400;">--</span>
+    </div>
+
+    <details>
+      <summary>¿Cómo se calcula esto?</summary>
+      <p>
+        <strong>IMC</strong> = peso (kg) / altura (m)². Categorías (OMS): &lt;18.5 bajo peso,
+        18.5–24.9 normal, 25–29.9 sobrepeso, ≥30 obesidad. El IMC no distingue grasa de músculo,
+        por eso se complementa con el % de grasa corporal.
+      </p>
+      <p>
+        <strong>% Grasa corporal (método US Navy, circunferencias en cm):</strong><br>
+        Hombres: 495 / (1.0324 − 0.19077·log₁₀(cintura−cuello) + 0.15456·log₁₀(altura)) − 450<br>
+        Mujeres: 495 / (1.29579 − 0.35004·log₁₀(cintura+cadera−cuello) + 0.22100·log₁₀(altura)) − 450
+      </p>
+      <p>
+        Es un método de estimación (no un DEXA scan), con margen de error de ±3-4 puntos, pero es el
+        estándar usado por el ejército de EE. UU. por su buena relación simplicidad/precisión.
+      </p>
+    </details>
+  </div>
+
+  <footer>Cálculo 100% local en tu navegador — ningún dato se envía a ningún servidor.</footer>
+</div>
+
+<script>
+  const sexInputs = document.querySelectorAll('input[name="sex"]');
+  const hipField = document.getElementById('hipField');
+  const errorMsg = document.getElementById('errorMsg');
+  const resultsCard = document.getElementById('resultsCard');
+
+  function updateHipVisibility() {
+    const sex = document.querySelector('input[name="sex"]:checked').value;
+    hipField.classList.toggle('hidden', sex === 'male');
+  }
+  sexInputs.forEach(el => el.addEventListener('change', updateHipVisibility));
+  updateHipVisibility();
+
+  function bmiCategory(bmi) {
+    if (bmi < 18.5) return { label: 'Bajo peso', cls: 'low' };
+    if (bmi < 25) return { label: 'Normal', cls: 'ok' };
+    if (bmi < 30) return { label: 'Sobrepeso', cls: 'warn' };
+    return { label: 'Obesidad', cls: 'high' };
+  }
+
+  function bfCategory(bf, sex) {
+    const ranges = sex === 'male'
+      ? [[0, 6, 'Grasa esencial', 'low'], [6, 14, 'Atlético', 'ok'], [14, 18, 'Fitness', 'ok'],
+         [18, 25, 'Aceptable', 'warn'], [25, 100, 'Alto', 'high']]
+      : [[0, 14, 'Grasa esencial', 'low'], [14, 21, 'Atlético', 'ok'], [21, 25, 'Fitness', 'ok'],
+         [25, 32, 'Aceptable', 'warn'], [32, 100, 'Alto', 'high']];
+    for (const [min, max, label, cls] of ranges) {
+      if (bf >= min && bf < max) return { label, cls };
+    }
+    return { label: '—', cls: 'warn' };
+  }
+
+  document.getElementById('calcBtn').addEventListener('click', () => {
+    errorMsg.textContent = '';
+    const sex = document.querySelector('input[name="sex"]:checked').value;
+    const height = parseFloat(document.getElementById('height').value);
+    const weight = parseFloat(document.getElementById('weight').value);
+    const neck = parseFloat(document.getElementById('neck').value);
+    const waist = parseFloat(document.getElementById('waist').value);
+    const hip = parseFloat(document.getElementById('hip').value);
+
+    if (!height || !weight || !neck || !waist || (sex === 'female' && !hip)) {
+      errorMsg.textContent = 'Completa todos los campos requeridos con valores válidos.';
+      resultsCard.classList.remove('show');
+      return;
+    }
+
+    const diff = sex === 'male' ? (waist - neck) : (waist + hip - neck);
+    if (diff <= 0) {
+      errorMsg.textContent = 'Revisa las medidas: la diferencia cintura/cuello (y cadera en mujeres) debe ser positiva.';
+      resultsCard.classList.remove('show');
+      return;
+    }
+
+    const heightM = height / 100;
+    const bmi = weight / (heightM * heightM);
+
+    let bf;
+    if (sex === 'male') {
+      bf = 495 / (1.0324 - 0.19077 * Math.log10(diff) + 0.15456 * Math.log10(height)) - 450;
+    } else {
+      bf = 495 / (1.29579 - 0.35004 * Math.log10(diff) + 0.22100 * Math.log10(height)) - 450;
+    }
+    bf = Math.max(0, bf);
+
+    const fatMass = weight * (bf / 100);
+    const leanMass = weight - fatMass;
+
+    const bmiCat = bmiCategory(bmi);
+    const bfCat = bfCategory(bf, sex);
+
+    document.getElementById('bmiValue').innerHTML =
+      bmi.toFixed(1) + ' <span class="badge ' + bmiCat.cls + '">' + bmiCat.label + '</span>';
+    document.getElementById('bfValue').innerHTML =
+      bf.toFixed(1) + ' % <span class="badge ' + bfCat.cls + '">' + bfCat.label + '</span>';
+    document.getElementById('massValue').textContent =
+      'Grasa: ' + fatMass.toFixed(1) + ' kg · Magra: ' + leanMass.toFixed(1) + ' kg';
+
+    resultsCard.classList.add('show');
+  });
+</script>
+</body>
+</html>
